@@ -112,8 +112,9 @@ INT32 BurnGetZipName(char** pszName, UINT32 i)
 	}
 
 	strcpy(szFilename, pszGameName);
+    strcat(szFilename, ".zip"); // Ensure extension is present for zip lookups
 
-	*pszName = szFilename;
+    *pszName = szFilename;
 
 	return 0;
 }
