@@ -2186,7 +2186,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    /* Ensure absolute PS2 compatibility with FBA archive string building */
    size_t len = strlen(g_rom_dir);
-   if (len > 0 && g_rom_dir[len - 1] != '/' && g_rom_dir[len - 1] != '\\')
+   if (len > 0 && g_rom_dir[len - 1] != '/' && g_rom_dir[len - 1] != '\\' && len < sizeof(g_rom_dir) - 1)
    {
       g_rom_dir[len] = '/';
       g_rom_dir[len + 1] = '\0';
