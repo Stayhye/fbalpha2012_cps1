@@ -60,63 +60,57 @@ extern "C" INT32 BurnLibExit(void)
 
 INT32 BurnGetZipName(char** pszName, UINT32 i)
 {
-	static char szFilename[MAX_PATH];
-	char* pszGameName = NULL;
+   static char szFilename[MAX_PATH];
+   char* pszGameName = NULL;
 
-	if (pszName == NULL)
-		return 1;
+   if (pszName == NULL)
+      return 1;
 
-	if (i == 0)
-		pszGameName = pDriver[nBurnDrvActive]->szShortName;
-	else
-	{
-		INT32 nOldBurnDrvSelect = nBurnDrvActive;
-		UINT32 j = pDriver[nBurnDrvActive]->szBoardROM ? 1 : 0;
+   if (i == 0)
+      pszGameName = pDriver[nBurnDrvActive]->szShortName;
+   else
+   {
+      INT32 nOldBurnDrvSelect = nBurnDrvActive;
+      UINT32 j = pDriver[nBurnDrvActive]->szBoardROM ? 1 : 0;
 
-		/* Try BIOS/board ROMs first */
-		if (i == 1 && j == 1) /* There is a BIOS/board ROM */
-			pszGameName = pDriver[nBurnDrvActive]->szBoardROM;
+      /* Try BIOS/board ROMs first */
+      if (i == 1 && j == 1)
+         pszGameName = pDriver[nBurnDrvActive]->szBoardROM;
 
-		if (pszGameName == NULL)
-		{
-			/* Go through the list to seek out the parent */
-			while (j < i)
-			{
-				char* pszParent = pDriver[nBurnDrvActive]->szParent;
-				pszGameName = NULL;
+      if (pszGameName == NULL)
+      {
+         while (j < i)
+         {
+            char* pszParent = pDriver[nBurnDrvActive]->szParent;
+            pszGameName = NULL;
 
-				if (pszParent == NULL) /* No parent */
-					break;
+            if (pszParent == NULL)
+               break;
 
-				for (nBurnDrvActive = 0; nBurnDrvActive < nBurnDrvCount; nBurnDrvActive++) {
-					if (strcmp(pszParent,
-								pDriver[nBurnDrvActive]->szShortName) == 0)
-					{
-						/* Found parent */
-						pszGameName = pDriver[nBurnDrvActive]->szShortName;
-						break;
-					}
-				}
+            for (nBurnDrvActive = 0; nBurnDrvActive < nBurnDrvCount; nBurnDrvActive++) {
+               if (strcmp(pszParent, pDriver[nBurnDrvActive]->szShortName) == 0)
+               {
+                  pszGameName = pDriver[nBurnDrvActive]->szShortName;
+                  break;
+               }
+            }
+            j++;
+         }
+      }
+      nBurnDrvActive = nOldBurnDrvSelect;
+   }
 
-				j++;
-			}
-		}
+   if (pszGameName == NULL)
+   {
+      *pszName = NULL;
+      return 1;
+   }
 
-		nBurnDrvActive = nOldBurnDrvSelect;
-	}
+   /* Copy plain short name; archive handler or frontend handles extension appending */
+   strcpy(szFilename, pszGameName);
+   *pszName = szFilename;
 
-	if (pszGameName == NULL)
-	{
-		*pszName = NULL;
-		return 1;
-	}
-
-	strcpy(szFilename, pszGameName);
-    strcat(szFilename, ".zip"); // Ensure extension is present for zip lookups
-
-    *pszName = szFilename;
-
-	return 0;
+   return 0;
 }
 
 /* ----------------------------------------------------------------------------
