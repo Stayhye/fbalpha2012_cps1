@@ -2221,9 +2221,8 @@ bool retro_load_game(const struct retro_game_info *info)
       log_cb(RETRO_LOG_ERROR, "System dir not defined => use roms dir %s\n", g_system_dir);
    }
 
-   /* Pass the full absolute file path into FBA's archive lookup context if supported,
-    * or ensure BurnSetPaths points accurately to g_rom_dir so zip mounting succeeds. */
-   BurnSetPaths(&g_rom_dir);
+   /* Register the ROM directory path using FBA's actual path configuration API */
+   BurnSetBurnPath(0, g_rom_dir);
 
    unsigned i = BurnDrvGetIndexByName(basename);
    if (i < nBurnDrvCount)
