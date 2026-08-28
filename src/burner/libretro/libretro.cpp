@@ -2184,14 +2184,12 @@ bool retro_load_game(const struct retro_game_info *info)
    extract_basename(basename, info->path, sizeof(basename));
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
 
-   /* Force standard PS2 path normalization for file IO handles */
-   if (g_rom_dir[0] != '\0')
+   /* Ensure absolute PS2 compatibility with FBA archive string building */
+   size_t len = strlen(g_rom_dir);
+   if (len > 0 && g_rom_dir[len - 1] != '/' && g_rom_dir[len - 1] != '\\')
    {
-      size_t len = strlen(g_rom_dir);
-      if (g_rom_dir[len - 1] != '/' && g_rom_dir[len - 1] != '\\')
-      {
-         strncat(g_rom_dir, "/", sizeof(g_rom_dir) - strlen(g_rom_dir) - 1);
-      }
+      g_rom_dir[len] = '/';
+      g_rom_dir[len + 1] = '\0';
    }
 
    const char *dir = NULL;
