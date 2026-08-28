@@ -2184,9 +2184,6 @@ bool retro_load_game(const struct retro_game_info *info)
    extract_basename(basename, info->path, sizeof(basename));
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
 
-   /* Explicitly register the path with FBA's path manager for the PS2 port */
-   BurnSetPath(0, g_rom_dir);
-
    /* Force standard PS2 path normalization for file IO handles */
    if (g_rom_dir[0] != '\0')
    {
