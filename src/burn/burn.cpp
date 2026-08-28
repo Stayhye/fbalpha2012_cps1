@@ -113,12 +113,6 @@ INT32 BurnGetZipName(char** pszName, UINT32 i)
       *ext = '\0';
    }
 
-   /* Safely append a single .zip extension */
-   size_t len = strlen(szFilename);
-   if (len < sizeof(szFilename) - 5) {
-      strcat(szFilename, ".zip");
-   }
-
    *pszName = szFilename;
 
    return 0;
