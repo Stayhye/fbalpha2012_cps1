@@ -2215,10 +2215,6 @@ bool retro_load_game(const struct retro_game_info *info)
       strncpy(g_system_dir, g_rom_dir, sizeof(g_system_dir));
    }
 
-   /* Directly pass path configurations using standard burn path arrays if exposed, 
-    * or rely on BurnDrvGetIndexByName which checks the archive directly from info->path. */
-   BurnDrvSetAllPaths(g_rom_dir);
-
    unsigned i = BurnDrvGetIndexByName(basename);
    if (i < nBurnDrvCount)
    {
