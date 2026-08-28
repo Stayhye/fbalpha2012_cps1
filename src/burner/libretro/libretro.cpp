@@ -2199,30 +2199,25 @@ bool retro_load_game(const struct retro_game_info *info)
    if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir && dir[0] != '\0')
    {
       strncpy(g_save_dir, dir, sizeof(g_save_dir));
-      log_cb(RETRO_LOG_INFO, "Setting save dir to %s\n", g_save_dir);
    }
    else
    {
-      /* ...otherwise use ROM directory */
       strncpy(g_save_dir, g_rom_dir, sizeof(g_save_dir));
-      log_cb(RETRO_LOG_ERROR, "Save dir not defined => use roms dir %s\n", g_save_dir);
    }
 
    /* If system directory is defined use it... */
    if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir && dir[0] != '\0')
    {
       strncpy(g_system_dir, dir, sizeof(g_system_dir));
-      log_cb(RETRO_LOG_INFO, "Setting system dir to %s\n", g_system_dir);
    }
    else
    {
-      /* ...otherwise use ROM directory */
       strncpy(g_system_dir, g_rom_dir, sizeof(g_system_dir));
-      log_cb(RETRO_LOG_ERROR, "System dir not defined => use roms dir %s\n", g_system_dir);
    }
 
-   /* Register the ROM directory path using FBA's actual path configuration API */
-   BurnSetBurnPath(0, g_rom_dir);
+   /* Directly pass path configurations using standard burn path arrays if exposed, 
+    * or rely on BurnDrvGetIndexByName which checks the archive directly from info->path. */
+   BurnDrvSetAllPaths(g_rom_dir);
 
    unsigned i = BurnDrvGetIndexByName(basename);
    if (i < nBurnDrvCount)
@@ -2239,9 +2234,6 @@ bool retro_load_game(const struct retro_game_info *info)
       driver_inited = true;
       analog_controls_enabled = init_input();
 
-      /* Note: The video buffer has to be oversized
-       * like this (i.e. not just width x height) because
-       * some games actually write into the excess space... */
       g_fba_frame = (uint16_t*)malloc(0x400 * 0x400 * sizeof(uint16_t));
 
       retval = true;
