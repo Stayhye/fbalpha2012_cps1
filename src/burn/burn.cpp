@@ -73,7 +73,6 @@ INT32 BurnGetZipName(char** pszName, UINT32 i)
       INT32 nOldBurnDrvSelect = nBurnDrvActive;
       UINT32 j = pDriver[nBurnDrvActive]->szBoardROM ? 1 : 0;
 
-      /* Try BIOS/board ROMs first */
       if (i == 1 && j == 1)
          pszGameName = pDriver[nBurnDrvActive]->szBoardROM;
 
@@ -106,11 +105,14 @@ INT32 BurnGetZipName(char** pszName, UINT32 i)
       return 1;
    }
 
-   strcpy(szFilename, pszGameName);
-   
-   /* Ensure .zip extension is present so the PS2 VFS opens it as an archive file instead of a directory search */
-   if (strstr(szFilename, ".zip") == NULL) {
-      strcat(szFilename, ".zip");
+   /* If pszGameName already contains an extension or matches the basename with zip, copy cleanly */
+   if (strrchr(pszGameName, '.'))
+   {
+      strncpy(szFilename, pszGameName, sizeof(szFilename));
+   }
+   else
+   {
+      snprintf(szFilename, sizeof(szFilename), "%s.zip", pszGameName);
    }
 
    *pszName = szFilename;
