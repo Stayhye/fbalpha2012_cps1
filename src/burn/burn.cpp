@@ -106,14 +106,17 @@ INT32 BurnGetZipName(char** pszName, UINT32 i)
       return 1;
    }
 
-   /* If pszGameName already has an extension, copy it directly; otherwise append .zip once */
-   if (strrchr(pszGameName, '.'))
-   {
-      strncpy(szFilename, pszGameName, sizeof(szFilename));
+   /* Copy base name and strip any existing extension to prevent .zip.zip */
+   strncpy(szFilename, pszGameName, sizeof(szFilename));
+   char* ext = strrchr(szFilename, '.');
+   if (ext) {
+      *ext = '\0';
    }
-   else
-   {
-      snprintf(szFilename, sizeof(szFilename), "%s.zip", pszGameName);
+
+   /* Safely append a single .zip extension */
+   size_t len = strlen(szFilename);
+   if (len < sizeof(szFilename) - 5) {
+      strcat(szFilename, ".zip");
    }
 
    *pszName = szFilename;
