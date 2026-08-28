@@ -106,8 +106,13 @@ INT32 BurnGetZipName(char** pszName, UINT32 i)
       return 1;
    }
 
-   /* Copy plain short name; archive handler or frontend handles extension appending */
    strcpy(szFilename, pszGameName);
+   
+   /* Ensure .zip extension is present so the PS2 VFS opens it as an archive file instead of a directory search */
+   if (strstr(szFilename, ".zip") == NULL) {
+      strcat(szFilename, ".zip");
+   }
+
    *pszName = szFilename;
 
    return 0;
