@@ -2184,9 +2184,19 @@ bool retro_load_game(const struct retro_game_info *info)
    extract_basename(basename, info->path, sizeof(basename));
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
 
+   /* Force standard PS2 path normalization for file IO handles */
+   if (g_rom_dir[0] != '\0')
+   {
+      size_t len = strlen(g_rom_dir);
+      if (g_rom_dir[len - 1] != '/' && g_rom_dir[len - 1] != '\\')
+      {
+         strncat(g_rom_dir, "/", sizeof(g_rom_dir) - strlen(g_rom_dir) - 1);
+      }
+   }
+
    const char *dir = NULL;
    /* If save directory is defined use it... */
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir)
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir && dir[0] != '\0')
    {
       strncpy(g_save_dir, dir, sizeof(g_save_dir));
       log_cb(RETRO_LOG_INFO, "Setting save dir to %s\n", g_save_dir);
@@ -2199,7 +2209,7 @@ bool retro_load_game(const struct retro_game_info *info)
    }
 
    /* If system directory is defined use it... */
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir && dir[0] != '\0')
    {
       strncpy(g_system_dir, dir, sizeof(g_system_dir));
       log_cb(RETRO_LOG_INFO, "Setting system dir to %s\n", g_system_dir);
@@ -2210,6 +2220,10 @@ bool retro_load_game(const struct retro_game_info *info)
       strncpy(g_system_dir, g_rom_dir, sizeof(g_system_dir));
       log_cb(RETRO_LOG_ERROR, "System dir not defined => use roms dir %s\n", g_system_dir);
    }
+
+   /* Pass the full absolute file path into FBA's archive lookup context if supported,
+    * or ensure BurnSetPaths points accurately to g_rom_dir so zip mounting succeeds. */
+   BurnSetPaths(&g_rom_dir);
 
    unsigned i = BurnDrvGetIndexByName(basename);
    if (i < nBurnDrvCount)
@@ -2234,7 +2248,7 @@ bool retro_load_game(const struct retro_game_info *info)
       retval = true;
    }
    else if (log_cb)
-      log_cb(RETRO_LOG_ERROR, "[FBA] Cannot find driver.\n");
+      log_cb(RETRO_LOG_ERROR, "[FBA] Cannot find driver for basename: %s\n", basename);
 
    InpDIPSWInit();
 
