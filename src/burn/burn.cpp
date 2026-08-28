@@ -66,35 +66,36 @@ INT32 BurnGetZipName(char** pszName, UINT32 i)
    if (pszName == NULL)
       return 1;
 
+   /* When index is 0, check if the active basename already has the .zip extension or is just the driver name */
    if (i == 0)
-      pszGameName = pDriver[nBurnDrvActive]->szShortName;
+   {
+      *pszName = basename; // Use the exact basename extracted from retro_load_game which already matches the file loaded by RetroArch
+      return 0;
+   }
+
+   /* For parent or BIOS ROMs (i > 0), look up via driver short names */
+   UINT32 j = pDriver[nBurnDrvActive]->szBoardROM ? 1 : 0;
+   if (i == 1 && j == 1)
+      pszGameName = pDriver[nBurnDrvActive]->szBoardROM;
    else
    {
       INT32 nOldBurnDrvSelect = nBurnDrvActive;
-      UINT32 j = pDriver[nBurnDrvActive]->szBoardROM ? 1 : 0;
-
-      if (i == 1 && j == 1)
-         pszGameName = pDriver[nBurnDrvActive]->szBoardROM;
-
-      if (pszGameName == NULL)
+      while (j < i)
       {
-         while (j < i)
-         {
-            char* pszParent = pDriver[nBurnDrvActive]->szParent;
-            pszGameName = NULL;
+         char* pszParent = pDriver[nBurnDrvActive]->szParent;
+         pszGameName = NULL;
 
-            if (pszParent == NULL)
+         if (pszParent == NULL)
+            break;
+
+         for (nBurnDrvActive = 0; nBurnDrvActive < nBurnDrvCount; nBurnDrvActive++) {
+            if (strcmp(pszParent, pDriver[nBurnDrvActive]->szShortName) == 0)
+            {
+               pszGameName = pDriver[nBurnDrvActive]->szShortName;
                break;
-
-            for (nBurnDrvActive = 0; nBurnDrvActive < nBurnDrvCount; nBurnDrvActive++) {
-               if (strcmp(pszParent, pDriver[nBurnDrvActive]->szShortName) == 0)
-               {
-                  pszGameName = pDriver[nBurnDrvActive]->szShortName;
-                  break;
-               }
             }
-            j++;
          }
+         j++;
       }
       nBurnDrvActive = nOldBurnDrvSelect;
    }
@@ -105,16 +106,7 @@ INT32 BurnGetZipName(char** pszName, UINT32 i)
       return 1;
    }
 
-   /* If pszGameName already contains an extension or matches the basename with zip, copy cleanly */
-   if (strrchr(pszGameName, '.'))
-   {
-      strncpy(szFilename, pszGameName, sizeof(szFilename));
-   }
-   else
-   {
-      snprintf(szFilename, sizeof(szFilename), "%s.zip", pszGameName);
-   }
-
+   snprintf(szFilename, sizeof(szFilename), "%s.zip", pszGameName);
    *pszName = szFilename;
 
    return 0;
