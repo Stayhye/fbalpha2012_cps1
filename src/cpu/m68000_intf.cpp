@@ -119,7 +119,7 @@ DEFLONGHANDLERS(0)
 // ----------------------------------------------------------------------------
 // Memory access functions
 
-// Mapped Memory lookup (         for read)
+// Mapped Memory lookup (        for read)
 #define FIND_R(x) pSekExt->MemMap[ x >> SEK_SHIFT]
 // Mapped Memory lookup (+ SEK_WADD     for write)
 #define FIND_W(x) pSekExt->MemMap[(x >> SEK_SHIFT) + SEK_WADD]
@@ -231,6 +231,51 @@ inline static void WriteWord(UINT32 a, UINT16 d)
     pSekExt->WriteWord[(uintptr_t)pr](a, d);
 }
 
+inline static UINT32 ReadLong(UINT32 a)
+{
+    UINT8* pr;
+    UINT32 val;
+
+    a &= 0xFFFFFF;
+
+    pr = FIND_R(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        memcpy(&val, pr + (a & SEK_PAGEM), sizeof(UINT32));
+        return BURN_ENDIAN_SWAP_INT32(val);
+    }
+    return pSekExt->ReadLong[(uintptr_t)pr](a);
+}
+
+inline static UINT32 FetchLong(UINT32 a)
+{
+    UINT8* pr;
+    UINT32 val;
+
+    a &= 0xFFFFFF;
+
+    pr = FIND_F(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        memcpy(&val, pr + (a & SEK_PAGEM), sizeof(UINT32));
+        return BURN_ENDIAN_SWAP_INT32(val);
+    }
+    return pSekExt->ReadLong[(uintptr_t)pr](a);
+}
+
+inline static void WriteLong(UINT32 a, UINT32 d)
+{
+    UINT8* pr;
+    UINT32 val;
+
+    a &= 0xFFFFFF;
+
+    pr = FIND_W(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        val = (UINT32)BURN_ENDIAN_SWAP_INT32(d);
+        memcpy(pr + (a & SEK_PAGEM), &val, sizeof(UINT32));
+        return;
+    }
+    pSekExt->WriteLong[(uintptr_t)pr](a, d);
+}
 inline static void WriteWordROM(UINT32 a, UINT16 d)
 {
     UINT8* pr;
