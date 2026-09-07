@@ -8,10 +8,10 @@ INT32 nSekM68KContextSize[SEK_MAX];
 INT8* SekM68KContext[SEK_MAX];
 #endif
 
-INT32 nSekCount = -1;							// Number of allocated 68000s
+INT32 nSekCount = -1;                          // Number of allocated 68000s
 struct SekExt *SekExt[SEK_MAX] = { NULL, }, *pSekExt = NULL;
 
-INT32 nSekActive = -1;								// The cpu which is currently being emulated
+INT32 nSekActive = -1;                                // The cpu which is currently being emulated
 INT32 nSekCyclesTotal, nSekCyclesScanline, nSekCyclesSegment, nSekCyclesDone, nSekCyclesToDo;
 
 INT32 nSekCPUType[SEK_MAX], nSekCycles[SEK_MAX], nSekIRQPending[SEK_MAX];
@@ -19,39 +19,39 @@ INT32 nSekCPUType[SEK_MAX], nSekCycles[SEK_MAX], nSekIRQPending[SEK_MAX];
 #if defined (EMU_A68K)
 static void UpdateA68KContext()
 {
-	if (M68000_regs.srh & 20) {		// Supervisor mode
-		M68000_regs.isp = M68000_regs.a[7];
-	} else {						// User mode
-		M68000_regs.usp = M68000_regs.a[7];
-	}
+    if (M68000_regs.srh & 20) {         // Supervisor mode
+        M68000_regs.isp = M68000_regs.a[7];
+    } else {                    // User mode
+        M68000_regs.usp = M68000_regs.a[7];
+    }
 
-	M68000_regs.sr  = (M68000_regs.srh <<  8) & 0xFF00;	// T, S, M, I
-	M68000_regs.sr |= (M68000_regs.xc  <<  4) & 0x0010;	// X
-	M68000_regs.sr |= (M68000_regs.ccr >>  4) & 0x0008;	// N
-	M68000_regs.sr |= (M68000_regs.ccr >>  4) & 0x0004;	// Z
-	M68000_regs.sr |= (M68000_regs.ccr >> 10) & 0x0002;	// V
-	M68000_regs.sr |= (M68000_regs.ccr      ) & 0x0001;	// C
+    M68000_regs.sr  = (M68000_regs.srh <<  8) & 0xFF00;    // T, S, M, I
+    M68000_regs.sr |= (M68000_regs.xc  <<  4) & 0x0010;    // X
+    M68000_regs.sr |= (M68000_regs.ccr >>  4) & 0x0008;    // N
+    M68000_regs.sr |= (M68000_regs.ccr >>  4) & 0x0004;    // Z
+    M68000_regs.sr |= (M68000_regs.ccr >> 10) & 0x0002;    // V
+    M68000_regs.sr |= (M68000_regs.ccr      ) & 0x0001;    // C
 }
 
 static UINT32 GetA68KSR()
 {
-	UpdateA68KContext();
+    UpdateA68KContext();
 
-	return M68000_regs.sr;
+    return M68000_regs.sr;
 }
 
 static UINT32 GetA68KISP()
 {
-	UpdateA68KContext();
+    UpdateA68KContext();
 
-	return M68000_regs.isp;
+    return M68000_regs.isp;
 }
 
 static UINT32 GetA68KUSP()
 {
-	UpdateA68KContext();
+    UpdateA68KContext();
 
-	return M68000_regs.usp;
+    return M68000_regs.usp;
 }
 #endif
 
@@ -61,12 +61,12 @@ static UINT32 GetA68KUSP()
 UINT8 __fastcall DefReadByte(UINT32) { return 0; }
 void __fastcall DefWriteByte(UINT32, UINT8) { }
 
-#define DEFWORDHANDLERS(i)																				\
-	UINT16 __fastcall DefReadWord##i(UINT32 a) { SEK_DEF_READ_WORD(i, a) }				\
-	void __fastcall DefWriteWord##i(UINT32 a, UINT16 d) { SEK_DEF_WRITE_WORD(i, a ,d) }
-#define DEFLONGHANDLERS(i)																				\
-	UINT32 __fastcall DefReadLong##i(UINT32 a) { SEK_DEF_READ_LONG(i, a) }					\
-	void __fastcall DefWriteLong##i(UINT32 a, UINT32 d) { SEK_DEF_WRITE_LONG(i, a , d) }
+#define DEFWORDHANDLERS(i)                                                                                        \
+    UINT16 __fastcall DefReadWord##i(UINT32 a) { SEK_DEF_READ_WORD(i, a) }                \
+    void __fastcall DefWriteWord##i(UINT32 a, UINT16 d) { SEK_DEF_WRITE_WORD(i, a ,d) }
+#define DEFLONGHANDLERS(i)                                                                                        \
+    UINT32 __fastcall DefReadLong##i(UINT32 a) { SEK_DEF_READ_LONG(i, a) }                  \
+    void __fastcall DefWriteLong##i(UINT32 a, UINT32 d) { SEK_DEF_WRITE_LONG(i, a , d) }
 
 DEFWORDHANDLERS(0)
 DEFLONGHANDLERS(0)
@@ -119,7 +119,7 @@ DEFLONGHANDLERS(0)
 // ----------------------------------------------------------------------------
 // Memory access functions
 
-// Mapped Memory lookup (               for read)
+// Mapped Memory lookup (         for read)
 #define FIND_R(x) pSekExt->MemMap[ x >> SEK_SHIFT]
 // Mapped Memory lookup (+ SEK_WADD     for write)
 #define FIND_W(x) pSekExt->MemMap[(x >> SEK_SHIFT) + SEK_WADD]
@@ -129,174 +129,188 @@ DEFLONGHANDLERS(0)
 // Normal memory access functions
 inline static UINT8 ReadByte(UINT32 a)
 {
-	UINT8* pr;
+    UINT8* pr;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_R(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		a ^= 1;
-		return pr[a & SEK_PAGEM];
-	}
-	return pSekExt->ReadByte[(uintptr_t)pr](a);
+    pr = FIND_R(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        a ^= 1;
+        return pr[a & SEK_PAGEM];
+    }
+    return pSekExt->ReadByte[(uintptr_t)pr](a);
 }
 
 inline static UINT8 FetchByte(UINT32 a)
 {
-	UINT8* pr;
+    UINT8* pr;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_F(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		a ^= 1;
-		return pr[a & SEK_PAGEM];
-	}
-	return pSekExt->ReadByte[(uintptr_t)pr](a);
+    pr = FIND_F(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        a ^= 1;
+        return pr[a & SEK_PAGEM];
+    }
+    return pSekExt->ReadByte[(uintptr_t)pr](a);
 }
 
 inline static void WriteByte(UINT32 a, UINT8 d)
 {
-	UINT8* pr;
+    UINT8* pr;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_W(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		a ^= 1;
-		pr[a & SEK_PAGEM] = (UINT8)d;
-		return;
-	}
-	pSekExt->WriteByte[(uintptr_t)pr](a, d);
+    pr = FIND_W(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        a ^= 1;
+        pr[a & SEK_PAGEM] = (UINT8)d;
+        return;
+    }
+    pSekExt->WriteByte[(uintptr_t)pr](a, d);
 }
 
 inline static void WriteByteROM(UINT32 a, UINT8 d)
 {
-	UINT8* pr;
+    UINT8* pr;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_R(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		a ^= 1;
-		pr[a & SEK_PAGEM] = (UINT8)d;
-		return;
-	}
-	pSekExt->WriteByte[(uintptr_t)pr](a, d);
+    pr = FIND_R(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        a ^= 1;
+        pr[a & SEK_PAGEM] = (UINT8)d;
+        return;
+    }
+    pSekExt->WriteByte[(uintptr_t)pr](a, d);
 }
 
 inline static UINT16 ReadWord(UINT32 a)
 {
-	UINT8* pr;
+    UINT8* pr;
+    UINT16 val;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_R(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		return BURN_ENDIAN_SWAP_INT16(*((UINT16*)(pr + (a & SEK_PAGEM))));
-	}
-	return pSekExt->ReadWord[(uintptr_t)pr](a);
+    pr = FIND_R(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        memcpy(&val, pr + (a & SEK_PAGEM), sizeof(UINT16));
+        return BURN_ENDIAN_SWAP_INT16(val);
+    }
+    return pSekExt->ReadWord[(uintptr_t)pr](a);
 }
 
 inline static UINT16 FetchWord(UINT32 a)
 {
-	UINT8* pr;
+    UINT8* pr;
+    UINT16 val;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_F(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		return BURN_ENDIAN_SWAP_INT16(*((UINT16*)(pr + (a & SEK_PAGEM))));
-	}
-	return pSekExt->ReadWord[(uintptr_t)pr](a);
+    pr = FIND_F(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        memcpy(&val, pr + (a & SEK_PAGEM), sizeof(UINT16));
+        return BURN_ENDIAN_SWAP_INT16(val);
+    }
+    return pSekExt->ReadWord[(uintptr_t)pr](a);
 }
 
 inline static void WriteWord(UINT32 a, UINT16 d)
 {
-	UINT8* pr;
+    UINT8* pr;
+    UINT16 val;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_W(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		*((UINT16*)(pr + (a & SEK_PAGEM))) = (UINT16)BURN_ENDIAN_SWAP_INT16(d);
-		return;
-	}
-	pSekExt->WriteWord[(uintptr_t)pr](a, d);
+    pr = FIND_W(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        val = (UINT16)BURN_ENDIAN_SWAP_INT16(d);
+        memcpy(pr + (a & SEK_PAGEM), &val, sizeof(UINT16));
+        return;
+    }
+    pSekExt->WriteWord[(uintptr_t)pr](a, d);
 }
 
 inline static void WriteWordROM(UINT32 a, UINT16 d)
 {
-	UINT8* pr;
+    UINT8* pr;
+    UINT16 val;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_R(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		*((UINT16*)(pr + (a & SEK_PAGEM))) = (UINT16)d;
-		return;
-	}
-	pSekExt->WriteWord[(uintptr_t)pr](a, d);
+    pr = FIND_R(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        val = (UINT16)d;
+        memcpy(pr + (a & SEK_PAGEM), &val, sizeof(UINT16));
+        return;
+    }
+    pSekExt->WriteWord[(uintptr_t)pr](a, d);
 }
 
 inline static UINT32 ReadLong(UINT32 a)
 {
-	UINT8* pr;
+    UINT8* pr;
+    UINT32 val;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_R(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		UINT32 r = *((UINT32*)(pr + (a & SEK_PAGEM)));
-		r = (r >> 16) | (r << 16);
-		return BURN_ENDIAN_SWAP_INT32(r);
-	}
-	return pSekExt->ReadLong[(uintptr_t)pr](a);
+    pr = FIND_R(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        memcpy(&val, pr + (a & SEK_PAGEM), sizeof(UINT32));
+        val = (val >> 16) | (val << 16);
+        return BURN_ENDIAN_SWAP_INT32(val);
+    }
+    return pSekExt->ReadLong[(uintptr_t)pr](a);
 }
 
 inline static UINT32 FetchLong(UINT32 a)
 {
-	UINT8* pr;
+    UINT8* pr;
+    UINT32 val;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_F(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		UINT32 r = *((UINT32*)(pr + (a & SEK_PAGEM)));
-		r = (r >> 16) | (r << 16);
-		return BURN_ENDIAN_SWAP_INT32(r);
-	}
-	return pSekExt->ReadLong[(uintptr_t)pr](a);
+    pr = FIND_F(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        memcpy(&val, pr + (a & SEK_PAGEM), sizeof(UINT32));
+        val = (val >> 16) | (val << 16);
+        return BURN_ENDIAN_SWAP_INT32(val);
+    }
+    return pSekExt->ReadLong[(uintptr_t)pr](a);
 }
 
 inline static void WriteLong(UINT32 a, UINT32 d)
 {
-	UINT8* pr;
+    UINT8* pr;
+    UINT32 val;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_W(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		d = (d >> 16) | (d << 16);
-		*((UINT32*)(pr + (a & SEK_PAGEM))) = BURN_ENDIAN_SWAP_INT32(d);
-		return;
-	}
-	pSekExt->WriteLong[(uintptr_t)pr](a, d);
+    pr = FIND_W(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        d = (d >> 16) | (d << 16);
+        val = BURN_ENDIAN_SWAP_INT32(d);
+        memcpy(pr + (a & SEK_PAGEM), &val, sizeof(UINT32));
+        return;
+    }
+    pSekExt->WriteLong[(uintptr_t)pr](a, d);
 }
 
 inline static void WriteLongROM(UINT32 a, UINT32 d)
 {
-	UINT8* pr;
+    UINT8* pr;
+    UINT32 val;
 
-	a &= 0xFFFFFF;
+    a &= 0xFFFFFF;
 
-	pr = FIND_R(a);
-	if ((uintptr_t)pr >= SEK_MAXHANDLER) {
-		d = (d >> 16) | (d << 16);
-		*((UINT32*)(pr + (a & SEK_PAGEM))) = d;
-		return;
-	}
-	pSekExt->WriteLong[(uintptr_t)pr](a, d);
+    pr = FIND_R(a);
+    if ((uintptr_t)pr >= SEK_MAXHANDLER) {
+        d = (d >> 16) | (d << 16);
+        val = d;
+        memcpy(pr + (a & SEK_PAGEM), &val, sizeof(UINT32));
+        return;
+    }
+    pSekExt->WriteLong[(uintptr_t)pr](a, d);
 }
 
 // ----------------------------------------------------------------------------
