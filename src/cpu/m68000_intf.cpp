@@ -230,6 +230,7 @@ inline static void WriteWord(UINT32 a, UINT16 d)
     }
     pSekExt->WriteWord[(uintptr_t)pr](a, d);
 }
+
 inline static void WriteWordROM(UINT32 a, UINT16 d)
 {
     UINT8* pr;
